@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Draw Perfect Circle</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: 'Arial', sans-serif;
+        }
+
+        .game-container {
+            position: relative;
+            width: 800px;
+            height: 600px;
+            background-color: #fff;
+            border: 2px solid #000;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* الخلفية المتحركة */
+        @keyframes gradientAnimation {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #ff6b6b, #f7b731, #48c6ef, #6a5acd);
+            background-size: 400% 400%;
+            animation: gradientAnimation 10s ease infinite;
+            z-index: -1; /* لضمان أن تكون الخلفية تحت المحتوى */
+        }
+
+        canvas {
+            margin-top: 10px;
+            border: 3px solid #000;
+            border-radius: 10px;
+        }
+
+        #message {
+            font-size: 24px;
+            margin: 10px 0;
+            color: #333;
+            font-weight: bold;
+        }
+
+        #highScore {
+            font-size: 18px;
+            color: #555;
+        }
+
+        #settingsIcon, #nameIcon {
+            position: absolute;
+            top: 10px;
+            cursor: pointer;
+        }
+
+        #settingsIcon {
+            right: 10px;
+        }
+
+        #nameIcon {
+            left: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        #nameInput {
+            display: none;
+            margin-left: 10px;
+            font-size: 16px;
+            padding: 5px;
+            text-align: center;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        #nameButton {
+            display: none;
+            margin-left: 10px;
+            font-size: 16px;
+            padding: 5px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #nameButton:hover {
+            background-color: #45a049;
+        }
+
+        #languageMenu {
+            display: none;
+            position: absolute;
+            top: 40px;
+            right: 10px;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
+            padding: 10px;
+        }
+
+        #languageMenu button {
+            background: none;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="background"></div> <!-- الخلفية المتحركة -->
+        <canvas id="gameCanvas" width="760" height="500"></canvas>
+        <p id="message">حاول رسم دائرة مثالية!</p>
+        <p id="highScore">أفضل اسكور: 0</p>
+
+        <!-- أيقونة الإعدادات -->
+        <img id="settingsIcon" src="https://img.icons8.com/ios/50/000000/settings.png" alt="Settings" width="30" height="30">
+        
+        <!-- أيقونة الاسم -->
+        <div id="nameIcon">
+            <img id="nameIconImg" src="https://img.icons8.com/ios/50/000000/user.png" alt="Name" width="30" height="30">
+            <input type="text" id="nameInput" placeholder="أدخل اسمك">
+            <button id="nameButton">حفظ الاسم</button>
+        </div>
+        
+        <!-- قائمة اللغة -->
+        <div id="languageMenu">
+            <button id="langArabic">العربية</button>
+            <button id="langEnglish">English</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const message = document.getElementById('message');
+        const highScoreElement = document.getElementById('highScore');
+        const settingsIcon = document.getElementById('settingsIcon');
+        const nameIcon = document.getElementById('nameIcon');
+        const languageMenu = document.getElementById('languageMenu');
+        const langArabic = document.getElementById('langArabic');
+        const langEnglish = document.getElementById('langEnglish');
+        const nameInput = document.getElementById('nameInput');
+        const nameButton = document.getElementById('nameButton');
+
+        const targetCircle = { x: 380, y: 250, radius: 100 }; // موقع الدائرة المثالية
+        let drawnCircle = null;
+        let startX, startY;
+        let isDrawing = false;
+
+        let highScore = 0;
+        let playerName = 'اللاعب';  // الاسم الافتراضي
+        let currentLanguage = 'ar'; // اللغة الحالية (ar للعربية و en للإنجليزية)
+
+        // النصوص لكل لغة
+        const texts = {
+            ar: {
+                drawPrompt: 'حاول رسم دائرة مثالية!',
+                scoreLabel: 'أفضل اسكور',
+                saveName: 'حفظ الاسم',
+                namePlaceholder: 'أدخل اسمك',
+            },
+            en: {
+                drawPrompt: 'Try to draw a perfect circle!',
+                scoreLabel: 'High Score',
+                saveName: 'Save Name',
+                namePlaceholder: 'Enter your name',
+            },
+        };
+
+        // تحديث النصوص بناءً على اللغة
+        function updateTexts() {
+            message.textContent = texts[currentLanguage].drawPrompt;
+            highScoreElement.textContent = `${texts[currentLanguage].scoreLabel}: ${playerName} - ${highScore.toFixed(2)}`;
+            nameInput.placeholder = texts[currentLanguage].namePlaceholder;
+            nameButton.textContent = texts[currentLanguage].saveName;
+        }
+
+        // رسم الدائرة المثالية
+        function drawTargetCircle() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.beginPath();
+            ctx.arc(targetCircle.x, targetCircle.y, targetCircle.radius, 0, Math.PI * 2);
+            ctx.strokeStyle = 'red';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+        }
+
+        // رسم الدائرة المرسومة من اللاعب
+        function drawDrawnCircle(x, y, radius) {
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.strokeStyle = 'blue';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+        }
+
+        // حساب الدقة بين الدائرة المرسومة والدائرة المثالية
+        function calculateScore(drawn, target) {
+            const distance = Math.sqrt(Math.pow(drawn.x - target.x, 2) + Math.pow(drawn.y - target.y, 2));
+            const radiusDiff = Math.abs(drawn.radius - target.radius);
+            const score = Math.max(0, 100 - (distance + radiusDiff));
+            return score;
+        }
+
+        // تحديث أفضل اسكور
+        function updateHighScore(score) {
+            if (score > highScore) {
+                highScore = score;
+                highScoreElement.textContent = `${texts[currentLanguage].scoreLabel}: ${playerName} - ${highScore.toFixed(2)}`;
+            }
+        }
+
+        // بدء الرسم
+        canvas.addEventListener('mousedown', (e) => {
+            startX = e.offsetX;
+            startY = e.offsetY;
+            isDrawing = true;
+
+            canvas.addEventListener('mousemove', onMouseMove);
+        });
+
+        function onMouseMove(e) {
+            if (isDrawing) {
+                const currentX = e.offsetX;
+                const currentY = e.offsetY;
+                const radius = Math.sqrt(Math.pow(currentX - startX, 2) + Math.pow(currentY - startY, 2));
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                drawTargetCircle();
+                drawDrawnCircle(startX, startY, radius);
+            }
+        }
+
+        canvas.addEventListener('mouseup', (e) => {
+            isDrawing = false;
+            const radius = Math.sqrt(Math.pow(e.offsetX - startX, 2) + Math.pow(e.offsetY - startY, 2));
+            drawnCircle = { x: startX, y: startY, radius: radius };
+            drawTargetCircle();
+            drawDrawnCircle(drawnCircle.x, drawnCircle.y, drawnCircle.radius);
+
+            const score = calculateScore(drawnCircle, targetCircle);
+            message.textContent = `${texts[currentLanguage].drawPrompt} ${score.toFixed(2)}%`;
+            updateHighScore(score); // تحديث أفضل اسكور
+        });
+
+        // إظهار قائمة اللغة
+        settingsIcon.addEventListener('click', () => {
+            languageMenu.style.display = languageMenu.style.display === 'block' ? 'none' : 'block';
+        });
+
+        // تغيير اللغة
+        langArabic.addEventListener('click', () => {
+            currentLanguage = 'ar';
+            updateTexts();
+        });
+
+        langEnglish.addEventListener('click', () => {
+            currentLanguage = 'en';
+            updateTexts();
+        });
+
+        // إدخال الاسم
+        nameIcon.addEventListener('click', () => {
+            nameInput.style.display = nameInput.style.display === 'none' ? 'block' : 'none';
+            nameButton.style.display = nameButton.style.display === 'none' ? 'block' : 'none';
+        });
+
+        nameButton.addEventListener('click', () => {
+            playerName = nameInput.value || texts[currentLanguage].namePlaceholder;
+            highScoreElement.textContent = `${texts[currentLanguage].scoreLabel}: ${playerName} - ${highScore.toFixed(2)}`;
+            nameInput.style.display = 'none';
+            nameButton.style.display = 'none';
+        });
+
+        // بدء اللعبة
+        updateTexts();
+        drawTargetCircle();
+    </script>
+</body>
+</html>

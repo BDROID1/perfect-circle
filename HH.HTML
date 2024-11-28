@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>قائمة اللعبة</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Arial', sans-serif;
+        }
+
+        /* الخلفية المتحركة */
+        .background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #ff6b6b, #f7b731, #48c6ef, #6a5acd);
+            background-size: 400% 400%;
+            animation: gradientAnimation 10s ease infinite;
+        }
+
+        @keyframes gradientAnimation {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        /* تصميم القائمة */
+        .menu {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: white;
+            z-index: 2;
+        }
+
+        .menu h1 {
+            font-size: 60px;
+            margin-bottom: 40px;
+            text-shadow: 3px 3px 5px rgba(0, 0, 0, 0.7);
+        }
+
+        .menu button {
+            background-color: transparent;
+            border: 2px solid white;
+            color: white;
+            font-size: 20px;
+            padding: 15px 30px;
+            margin: 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .menu button:hover {
+            background-color: white;
+            color: #333;
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+        }
+
+        /* إضافة تأثير عند الضغط على الأزرار */
+        .menu button:active {
+            transform: scale(1.05);
+        }
+
+        /* تأثير الـ Loading */
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 30px;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+            z-index: 3;
+            opacity: 0;
+            display: none; /* إخفاءها عند بداية الصفحة */
+            animation: fadeIn 1s forwards;
+        }
+
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+
+        .loader {
+            border: 8px solid rgba(255, 255, 255, 0.3);
+            border-top: 8px solid white;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin-left: 15px; /* المسافة بين النص واللودر */
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background"></div> <!-- الخلفية المتحركة -->
+
+    <div class="menu">
+        <h1>مرحبا بك في اللعبة</h1>
+        <button id="startBtn">ابدأ اللعبة</button>
+        <button id="aboutBtn">عن اللعبة</button>
+    </div>
+
+    <!-- عنصر الـ Loading الذي سيظهر عند الضغط على زر بدء اللعبة -->
+    <div class="loading" id="loadingMessage">
+        جاري التحميل...
+        <div class="loader"></div>
+    </div>
+
+    <script>
+        // التأثيرات عند الضغط على الأزرار
+        document.getElementById('startBtn').addEventListener('click', function() {
+            // إخفاء القائمة
+            document.querySelector('.menu').style.display = 'none';
+            // إظهار تأثير الـ Loading
+            document.getElementById('loadingMessage').style.display = 'block';
+
+            // تأخير لعدة ثواني ليظهر شاشة التحميل ثم نقوم بتوجيه الصفحة إلى رابط اللعبة
+            setTimeout(function() {
+                window.location.href = 'game.html'; // استبدل بـ رابط الصفحة الخاصة باللعبة
+            }, 10000); // تأخير 10 ثواني
+        });
+
+        document.getElementById('aboutBtn').addEventListener('click', function() {
+            alert("هذه لعبة مميزة حيث تحاول رسم دائرة مثالية!");
+            // يمكنك إضافة كود لعرض معلومات عن اللعبة هنا
+        });
+    </script>
+</body>
+</html>
